@@ -19,7 +19,6 @@ void main()
     write("> ");
 
     foreach (line; stdin.byLine()) {
-
         parse(line);
 
         write("> ");
