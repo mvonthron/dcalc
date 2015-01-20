@@ -3,6 +3,7 @@ import std.string;
 import std.conv;
 
 import tokenizer;
+import group;
 
 void parse(char[] line)
 {
@@ -10,7 +11,9 @@ void parse(char[] line)
     //if(line[0] == '?') {
         writeln("... ", line);
     }
-    tokenize(to!string(line));
+    auto tokens = tokenize(to!string(line));
+    auto groups = groupify(tokens);
+    writeln(groups.toString());
 }
 
 void main()
@@ -19,7 +22,7 @@ void main()
     write("> ");
 
     foreach (line; stdin.byLine()) {
-        parse(line);
+            parse(line);
 
         write("> ");
     }

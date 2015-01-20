@@ -6,6 +6,7 @@ import std.ascii;
 import std.conv;
 
 
+/* @todo Token should be a template<type> Token */
 interface Token 
 {
     //void add(Token);
@@ -14,27 +15,30 @@ interface Token
     //void divide(Token);
 
     //void type();
+    string toString();
 }
 
 class Integer: Token 
 {
     this(int v) { value = v; }
     int value;
-    auto val() { return value; }
+    override string toString() { return to!string(value); }
 }
 
 class Floating: Token
 {
     this(float v) { value = v; }
     float value;
-    auto val() { return value; }
+    override string toString() { return to!string(value); }
 }
 
 class Operator: Token
 {
-    this(char v) { value = v; }
+    this(char v, int p) { value = v; priority = p; }
     char value;
-    auto val() { return value; }
+    int priority;
+
+    override string toString() { return to!string(value); }
 }
 
 class Parenthesis {
@@ -53,12 +57,14 @@ class Brace {
 Operator[char] Operators;
 static this() {
     Operators = [
-        '+': new Operator('+'),
-        '-': new Operator('-'),
-        '*': new Operator('*'),
-        '/': new Operator('/'),
-        '^': new Operator('^'),
-        '%': new Operator('%'),
+        '+': new Operator('+', 2),
+        '-': new Operator('-', 2),
+        
+        '*': new Operator('*', 4),
+        '/': new Operator('/', 4),
+        '%': new Operator('%', 4),
+
+        '^': new Operator('^', 6),
     ];
 }
 
@@ -67,59 +73,42 @@ class Tokenizer
     this() {};
     ~this(){};
 
-    void putRaw(ref const string t) {
-        if(t.length){
-            tokens ~= t.dup;
+    void putNumber(ref const string num){
+        if(num.indexOf('.') != -1){
+            tokens ~= new Floating(to!float(num));
+        }else{
+            tokens ~= new Integer(to!int(num));
         }
-    }   
-
-    void putRaw(char t) {
-        tokens ~= to!string(t);
+    }
+    void put(Token t) {
+        tokens ~= t;
     }
 
-    void print() {
-        foreach(t; tokens) {
-            write('(', t, ')');
+    void printTokens(){
+        foreach(t; tokens){
+            if(cast(Floating) t){
+                writef("{%f}", (cast(Floating) t).value);
+            }
+            else if(cast(Integer) t){
+                writef("{%d}", (cast(Integer) t).value);
+            }
+            else if(cast(Operator) t){
+                writef(" %s ", (cast(Operator) t).value);
+            }
         }
         writeln();
     }
 
-    void putNumber(ref const string num){
-        if(num.indexOf('.') != -1){
-            tok ~= new Floating(to!float(num));
-        }else{
-            tok ~= new Integer(to!int(num));
-        }
-    }
-    void put(Token t) {
-        tok ~= t;
-    }
-
-    void printTokens(){
-        foreach(t; tok){
-            if(cast(Floating) t){
-                write('<', (cast(Floating) t).value, "f>");
-            }
-            else if(cast(Integer) t){
-                write('<', (cast(Integer) t).value, '>');
-            }
-            else if(cast(Operator) t){
-                write(' ', (cast(Operator) t).value, ' ');
-            }
-        }
-    }
-
-    string[] tokens;
-    Token[] tok;
+    Token[] tokens;
 }
 
 
 /** tokens */
-void tokenize(string str)
+auto tokenize(string str)
 {
 
     Token[] tokens;
-    auto tok = new Tokenizer;
+    auto tokenizer = new Tokenizer;
 
     string currentNumber="";
 
@@ -129,23 +118,20 @@ void tokenize(string str)
        
         if (isDigit(c) || c == '.'){
             if(c == '.' && currentNumber.indexOf('.') != -1){
-                writeln("Invalid sequence: \"..\"");
-                return;
+                throw new Exception("Invalid sequence: \"..\"");
             }
             currentNumber ~= c;
         }
         else if(isWhite(c)) {
             // end parsing number, otherwise ignore
             if(currentNumber.length){
-                tok.putRaw(currentNumber);
-                tok.putNumber(currentNumber);
-
+                tokenizer.putNumber(currentNumber);
                 currentNumber.clear();
             }
         }
         else if(c in Operators){
-            tok.putRaw(currentNumber);
-            tok.putNumber(currentNumber);
+            tokenizer.putNumber(currentNumber);
+            currentNumber.clear();
 
             // special case: if "**" => '^'
             if(c == '*' && i<(str.length-1) && str[i+1] == '*'){
@@ -154,21 +140,15 @@ void tokenize(string str)
             }
 
             auto op = Operators[c];
-
-            tok.putRaw(c);
-            tok.put(op);
-
-            currentNumber.clear();
+            tokenizer.put(op);
         }
         else {
-            writeln("*** invalid character: ", c);
-            return;
+            throw new Exception(format("*** invalid character: %c", c));
         }
     }
 
-    tok.putRaw(currentNumber);
-    tok.putNumber(currentNumber);
-    
-    tok.print();
-    tok.printTokens();
+    tokenizer.putNumber(currentNumber);
+    tokenizer.printTokens();
+
+    return tokenizer.tokens;
 }
