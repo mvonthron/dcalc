@@ -83,7 +83,6 @@ Token[] shunting_yard(Token[] infix)
     foreach(token; infix) {
         Operator operator = cast(Operator) token;
         if(operator){
-            writeln("~Op:", operator.toString());
             if(operators.empty){
                 operators.insertBack(operator);
             }else{
@@ -92,7 +91,7 @@ Token[] shunting_yard(Token[] infix)
 
                 if(prio > prev_prio){
                     while(!operators.empty){
-                        postfix ~= operators.front;
+                        postfix ~= operators.back;
                         operators.removeBack();
                     }
                 }
@@ -100,17 +99,22 @@ Token[] shunting_yard(Token[] infix)
             }
 
         }else{
-            writeln("Tok:", token.toString());
             postfix ~= token;
         }
     }
 
     while(!operators.empty){
-        postfix ~= operators.front;
+        postfix ~= operators.back;
         operators.removeBack();
     }
 
     return postfix;
+}
+
+
+string print_postfix(Token[] tokens)
+{
+    return "";
 }
 
 unittest 
