@@ -19,7 +19,7 @@ void parse(char[] line)
 
     auto postfix = shunting_yard(tokens);
     Tokenizer.printTokens(postfix);
-    //writeln("2.", groups.toString());
+    writeln("2.", postfix_tostring(postfix));
 }
 
 void main()

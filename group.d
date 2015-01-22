@@ -89,7 +89,7 @@ Token[] shunting_yard(Token[] infix)
                 auto prio = operator.priority;
                 auto prev_prio = operators.front.priority;
 
-                if(prio > prev_prio){
+                if(prio < prev_prio){
                     while(!operators.empty){
                         postfix ~= operators.back;
                         operators.removeBack();
@@ -112,9 +112,26 @@ Token[] shunting_yard(Token[] infix)
 }
 
 
-string print_postfix(Token[] tokens)
+string postfix_tostring(Token[] tokens)
 {
-    return "";
+    Array!Token stack;
+    
+    foreach(token; tokens){
+        Operator operator = cast(Operator) token;
+        if (operator){
+            auto right = stack.back;
+            stack.removeBack();
+            auto left = stack.back;
+            stack.removeBack();
+            
+            stack.insertBack(new Group(left, operator, right));
+
+        }else{
+            stack.insertBack(token);
+        }   
+    }
+    
+    return stack.back.toString();
 }
 
 unittest 
