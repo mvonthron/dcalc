@@ -84,7 +84,7 @@ class Tokenizer
         tokens ~= t;
     }
 
-    void printTokens(){
+    static void printTokens(Token[] tokens){
         foreach(t; tokens){
             if(cast(Floating) t){
                 writef("{%f}", (cast(Floating) t).value);
@@ -93,7 +93,7 @@ class Tokenizer
                 writef("{%d}", (cast(Integer) t).value);
             }
             else if(cast(Operator) t){
-                writef(" %s ", (cast(Operator) t).value);
+                writef("%s", (cast(Operator) t).value);
             }
         }
         writeln();
@@ -148,7 +148,6 @@ auto tokenize(string str)
     }
 
     tokenizer.putNumber(currentNumber);
-    tokenizer.printTokens();
 
     return tokenizer.tokens;
 }

@@ -12,8 +12,14 @@ void parse(char[] line)
         writeln("... ", line);
     }
     auto tokens = tokenize(to!string(line));
+    Tokenizer.printTokens(tokens);
+
     auto groups = groupify(tokens);
-    writeln(groups.toString());
+    writeln("1.", groups.toString());    
+
+    auto postfix = shunting_yard(tokens);
+    Tokenizer.printTokens(postfix);
+    //writeln("2.", groups.toString());
 }
 
 void main()
@@ -22,8 +28,7 @@ void main()
     write("> ");
 
     foreach (line; stdin.byLine()) {
-            parse(line);
-
+        parse(line);
         write("> ");
     }
 

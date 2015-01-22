@@ -1,6 +1,6 @@
 import std.stdio;
 import std.string;
-
+import std.container;
 import tokenizer;
 
 
@@ -73,6 +73,44 @@ Group groupify(Token[] tokens)
     }
 
     return new Group(left, op, right);
+}
+
+Token[] shunting_yard(Token[] infix)
+{
+    Token[] postfix;
+    Array!Operator operators;
+
+    foreach(token; infix) {
+        Operator operator = cast(Operator) token;
+        if(operator){
+            writeln("~Op:", operator.toString());
+            if(operators.empty){
+                operators.insertBack(operator);
+            }else{
+                auto prio = operator.priority;
+                auto prev_prio = operators.front.priority;
+
+                if(prio > prev_prio){
+                    while(!operators.empty){
+                        postfix ~= operators.front;
+                        operators.removeBack();
+                    }
+                }
+                operators.insertBack(operator);
+            }
+
+        }else{
+            writeln("Tok:", token.toString());
+            postfix ~= token;
+        }
+    }
+
+    while(!operators.empty){
+        postfix ~= operators.front;
+        operators.removeBack();
+    }
+
+    return postfix;
 }
 
 unittest 
