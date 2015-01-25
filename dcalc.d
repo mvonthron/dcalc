@@ -14,12 +14,9 @@ void parse(char[] line)
     auto tokens = tokenize(to!string(line));
     Tokenizer.printTokens(tokens);
 
-    auto groups = groupify(tokens);
-    writeln("1.", groups.toString());    
-
     auto postfix = shunting_yard(tokens);
     Tokenizer.printTokens(postfix);
-    writeln("2.", postfix_tostring(postfix));
+    writeln("2.",  postfix_tostring(postfix));
 }
 
 void main()

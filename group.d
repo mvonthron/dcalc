@@ -18,6 +18,26 @@ class Group: Token
         return format("(%s %s %s)", left.toString(), op.toString(), right.toString());
     }
 
+    static Group fromPostfix(Token[] tokens)
+    {
+        Array!Token stack;
+        foreach(token; tokens){
+            Operator operator = cast(Operator) token;
+            if (operator){
+                auto right = stack.back;
+                stack.removeBack();
+                auto left = stack.back;
+                stack.removeBack();
+                
+                stack.insertBack(new Group(left, operator, right));
+
+            }else{
+                stack.insertBack(token);
+            }   
+        }
+        return cast(Group) stack.back;
+    }
+
     Token left;
     Operator op;
     Token right;
@@ -82,19 +102,32 @@ Token[] shunting_yard(Token[] infix)
 
     foreach(token; infix) {
         Operator operator = cast(Operator) token;
-        if(operator){
-            if(operators.empty){
-                operators.insertBack(operator);
-            }else{
-                auto prio = operator.priority;
-                auto prev_prio = operators.front.priority;
 
-                if(prio < prev_prio){
-                    while(!operators.empty){
+        if(operator){
+            if(operators.empty || operator.value == '('){
+                operators.insertBack(operator);
+            }
+            else if(operator.value == ')') {
+                while(!operators.empty && operators.back.value != '(') {
+                    postfix ~= operators.back;
+                    operators.removeBack();
+                }
+                // we break the loop not to go infinite but there must be a left parenthesis somewhere
+                assert(!operators.empty && operators.back.value == '(');
+                // and discard the right parenthesis
+                operators.removeBack();
+            }
+            else{
+                while(!operators.empty) {
+                    if(operator.assoc == Associativity.Left && operator.priority <= operators.back.priority
+                        || operator.assoc == Associativity.Right && operator.priority < operators.back.priority) {
                         postfix ~= operators.back;
                         operators.removeBack();
+                    }else{
+                        break;
                     }
                 }
+
                 operators.insertBack(operator);
             }
 
@@ -119,6 +152,10 @@ string postfix_tostring(Token[] tokens)
     foreach(token; tokens){
         Operator operator = cast(Operator) token;
         if (operator){
+            if(operator.value == '(' || operator.value == ')'){
+                writeln("Error: shouldn't be any parenthesis in the postfix form");
+                break;
+            }
             auto right = stack.back;
             stack.removeBack();
             auto left = stack.back;

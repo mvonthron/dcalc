@@ -5,6 +5,10 @@ import std.string;
 import std.ascii;
 import std.conv;
 
+enum Associativity {
+    Left,
+    Right
+}
 
 /* @todo Token should be a template<type> Token */
 interface Token 
@@ -34,17 +38,14 @@ class Floating: Token
 
 class Operator: Token
 {
-    this(char v, int p) { value = v; priority = p; }
+    this(char v, int p, Associativity a) { value = v; priority = p; assoc = a; }
     char value;
     int priority;
+    Associativity assoc;
 
     override string toString() { return to!string(value); }
 }
 
-class Parenthesis {
-    static char Left = '(';
-    static char Right = ')';
-}
 class Bracket {
     static char Left = '[';
     static char Right = ']';
@@ -57,14 +58,17 @@ class Brace {
 Operator[char] Operators;
 static this() {
     Operators = [
-        '+': new Operator('+', 2),
-        '-': new Operator('-', 2),
+        '+': new Operator('+', 2, Associativity.Left),
+        '-': new Operator('-', 2, Associativity.Left),
         
-        '*': new Operator('*', 4),
-        '/': new Operator('/', 4),
-        '%': new Operator('%', 4),
+        '*': new Operator('*', 4, Associativity.Left),
+        '/': new Operator('/', 4, Associativity.Left),
+        '%': new Operator('%', 4, Associativity.Left),
 
-        '^': new Operator('^', 6),
+        '^': new Operator('^', 6, Associativity.Right),
+
+        '(': new Operator('(', 0, Associativity.Left),
+        ')': new Operator(')', 0, Associativity.Left),
     ];
 }
 
@@ -74,6 +78,8 @@ class Tokenizer
     ~this(){};
 
     void putNumber(ref const string num){
+        assert(num.length);
+
         if(num.indexOf('.') != -1){
             tokens ~= new Floating(to!float(num));
         }else{
@@ -130,9 +136,10 @@ auto tokenize(string str)
             }
         }
         else if(c in Operators){
-            tokenizer.putNumber(currentNumber);
-            currentNumber.clear();
-
+            if(currentNumber.length) {
+                tokenizer.putNumber(currentNumber);
+                currentNumber.clear();
+            }
             // special case: if "**" => '^'
             if(c == '*' && i<(str.length-1) && str[i+1] == '*'){
                 i++;
@@ -147,7 +154,10 @@ auto tokenize(string str)
         }
     }
 
-    tokenizer.putNumber(currentNumber);
+    if(currentNumber.length){
+        tokenizer.putNumber(currentNumber);
+        currentNumber.clear();
+    }
 
     return tokenizer.tokens;
 }
