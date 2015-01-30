@@ -5,6 +5,8 @@ import std.string;
 import std.ascii;
 import std.conv;
 
+import operator;
+
 enum Associativity {
     Left,
     Right
@@ -13,52 +15,50 @@ enum Associativity {
 /* @todo Token should be a template<type> Token */
 interface Token 
 {
-    //void add(Token);
-    //void substract(Token);
-    //void multiply(Token);
-    //void divide(Token);
-
     //void type();
     string toString();
 }
 
-class Integer: Token 
+interface Number 
+{
+    void Add(Number);
+}
+
+class Integer: Token, Number
 {
     this(int v) { value = v; }
     int value;
     override string toString() { return to!string(value); }
+
+    void Add(Number right) { Add(right); }
+    void Add(Integer right) { writefln("Integer::Add(%d+%d)", value, right.value); }
+    void Add(Floating right) { writefln("Integer::Add(%d+%d)", value, right.value); }
 }
 
-class Floating: Token
+class Floating: Token, Number
 {
     this(float v) { value = v; }
     float value;
     override string toString() { return to!string(value); }
+
+    void Add(Number n) { writeln("Floating::Add"); }
 }
 
 class Operator: Token
 {
     this(char v, int p, Associativity a) { value = v; priority = p; assoc = a; }
+    this(char v, int p, Associativity a, Operation o) { value = v; priority = p; assoc = a; op = o; }
     char value;
     int priority;
     Associativity assoc;
-
+    Operation op;
     override string toString() { return to!string(value); }
-}
-
-class Bracket {
-    static char Left = '[';
-    static char Right = ']';
-}
-class Brace {
-    static char Left = '{';
-    static char Right = '}';
 }
 
 Operator[char] Operators;
 static this() {
     Operators = [
-        '+': new Operator('+', 2, Associativity.Left),
+        '+': new Operator('+', 2, Associativity.Left, &Add),
         '-': new Operator('-', 2, Associativity.Left),
         
         '*': new Operator('*', 4, Associativity.Left),

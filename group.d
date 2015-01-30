@@ -38,61 +38,40 @@ class Group: Token
         return cast(Group) stack.back;
     }
 
+    static void exec(Token[] tokens)
+    {
+        Array!Number stack;
+    
+        foreach(token; tokens){
+            writeln("stack len ", stack.length);
+
+            Operator operator = cast(Operator) token;
+            if (operator){
+                if(operator.value == '(' || operator.value == ')'){
+                    writeln("Error: shouldn't be any parenthesis in the postfix form");
+                    break;
+                }
+                auto right = stack.back;
+                stack.removeBack();
+                auto left = stack.back;
+                stack.removeBack();
+                
+                operator.op(left, right);
+
+            }else{
+                stack.insertBack(cast(Number) token);
+            }   
+        }
+    }
+
+    Token exec()
+    {
+        return null;
+    }
+
     Token left;
     Operator op;
     Token right;
-}
-
-Group groupify(Token[] tokens)
-{
-
-    if(tokens.length < 3 || tokens.length % 2 == 0) {  
-        throw new Exception("Not enough tokens");
-    }
-
-    /* 1 + 2 * 3... => '+' */
-    Token left = tokens[0];
-    Operator op = cast(Operator) tokens[1];
-    Token right = tokens[2];
-
-    /* ex (3, +, 4) */
-    if(tokens.length == 3) {
-        writeln("group of 3");
-        return new Group(left, op, right);
-    }
-
-    Operator next_op = cast(Operator) tokens[3];
-
-    // ex: '+' followed by '*'
-    if (next_op.priority > op.priority) {
-        /* 1 + 2 * 3 => (1, '+', (2, '*', 3))
-         *               ^   ^    `-------´
-         *        left --´   `-- op    ^-- right
-         */
-        right = groupify(tokens[2..$]);
-    } 
-    // ex: '*' followed by '+'
-    else {
-        left = new Group(left, op, right);
-        op = next_op;
-
-        if(tokens.length == 5){
-            /* 1 * 2 + 3 => ((1, '*', 2), '+', 3)
-             *                `-------´    ^   ^
-             *             left --^   op --´   `-- right
-             */
-            right = tokens[4];
-        }else{
-            /* 1 * 2 + 3 / 4 => ((1, '*', 2), '+', (3, '/', 4))
-             *                    `-------´    ^    `-------´
-             *                 left --^   op --´        ^-- right
-             */
-            right = groupify(tokens[4..$]);
-        }
-        
-    }
-
-    return new Group(left, op, right);
 }
 
 Token[] shunting_yard(Token[] infix)
