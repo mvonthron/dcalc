@@ -64,11 +64,6 @@ class Group: Token
         }
     }
 
-    Token exec()
-    {
-        return null;
-    }
-
     Token left;
     Operator op;
     Token right;
